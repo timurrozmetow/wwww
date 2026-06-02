@@ -1,0 +1,15 @@
+# Keep the build context small + never ship host artifacts/secrets into the image.
+**/node_modules
+**/dist
+**/build
+**/.turbo
+.git
+.gitignore
+**/android
+**/ios
+**/.expo
+**/coverage
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example

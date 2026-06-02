@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+coverage
+.turbo
+.expo
+apps/mobile/android
+apps/mobile/ios
+pnpm-lock.yaml
+*.tsbuildinfo
+
+# Author-owned docs — keep their exact formatting.
+CLAUDE.md
+docs/SPEC.md
+
+# Generated migration artifacts (drizzle-kit owns these).
+apps/backend/drizzle

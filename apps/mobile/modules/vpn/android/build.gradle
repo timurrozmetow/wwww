@@ -1,0 +1,36 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'com.freevpnrewards.vpn'
+version = '0.1.0'
+
+def expoModulesCorePlugin = new File(
+  project(":expo-modules-core").projectDir.absolutePath,
+  "ExpoModulesCorePlugin.gradle"
+)
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+android {
+  namespace "com.freevpnrewards.vpn"
+  compileSdkVersion safeExtGet("compileSdkVersion", 35)
+
+  defaultConfig {
+    minSdkVersion safeExtGet("minSdkVersion", 24)
+    targetSdkVersion safeExtGet("targetSdkVersion", 35)
+  }
+}
+
+dependencies {
+  implementation "androidx.core:core-ktx:1.13.1"
+
+  // sing-box mobile bindings (gomobile-built `libbox.aar`). Not committed — drop
+  // the AAR into android/libs/ before building (see docs/VPN.md, §3 VPN core).
+  // implementation files("libs/libbox.aar")
+}
+
+def safeExtGet(prop, fallback) {
+  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}

@@ -1,0 +1,34 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://10.0.2.2:3000"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://API_BASE_URL_PLACEHOLDER",
+        "EXPO_PUBLIC_ADMOB_ANDROID_APP_ID": "ca-app-pub-3940256099942544~3347511713"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": { "buildType": "app-bundle" },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://API_BASE_URL_PLACEHOLDER"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

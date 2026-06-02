@@ -1,0 +1,15 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Native deps whose install/build scripts pnpm is allowed to run (pnpm blocks
+# them by default). esbuild powers Vite; msgpackr-extract is an optional native
+# accelerator. Both are first-party, trusted build steps.
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: true
+
+# Allow these recently-published versions through pnpm's minimum-release-age gate.
+minimumReleaseAgeExclude:
+  - tsx@4.22.4
+  - vite@8.0.15

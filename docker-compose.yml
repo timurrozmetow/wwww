@@ -1,0 +1,41 @@
+# Local dev infrastructure for the backend control-plane.
+# Redis is started with AOF persistence (CLAUDE.md §14.3) so sessions, live
+# balance, countdowns, rate-limit and anti-fraud counters survive a restart.
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: vpn
+      MYSQL_USER: vpn
+      MYSQL_PASSWORD: vpn_password
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: ['--default-authentication-plugin=caching_sha2_password']
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-proot_password']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # AOF on (appendonly yes) — required persistence per CLAUDE.md §14.3.
+    command: ['redis-server', '--appendonly', 'yes', '--appendfsync', 'everysec']
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:
+  redis_data:

@@ -1,0 +1,16 @@
+{
+  "name": "@vpn/config",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint.base.mjs": "./eslint.base.mjs",
+    "./prettier.base.mjs": "./prettier.base.mjs"
+  },
+  "files": [
+    "tsconfig.base.json",
+    "eslint.base.mjs",
+    "prettier.base.mjs"
+  ]
+}

@@ -1,0 +1,18 @@
+# Auto-HTTPS reverse proxy. $DOMAIN must be the full API hostname (e.g.
+# api.example.com) with a DNS A record pointing at this VPS, ports 80+443 open.
+# Caddy obtains and renews a Let's Encrypt certificate automatically.
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy backend:3000
+
+	log {
+		# Don't log query strings: the AdMob SSV callback carries a signature +
+		# user_id (CLAUDE.md §9). Keep method + path only.
+		format filter {
+			wrap console
+			fields {
+				request>uri query delete
+			}
+		}
+	}
+}
