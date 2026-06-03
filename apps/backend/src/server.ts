@@ -227,7 +227,13 @@ export async function buildServer(opts: BuildServerOptions = {}): Promise<Fastif
   });
 
   await app.register(helmet);
-  await app.register(cors, { origin: true });
+  // Reflect the request origin and explicitly allow every method/header the admin
+  // SPA and mobile client use — DELETE/PATCH preflights fail without this.
+  await app.register(cors, {
+    origin: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-device-id'],
+  });
   await app.register(sensible);
   await app.register(redisPlugin);
 
