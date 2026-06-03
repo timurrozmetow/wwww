@@ -27,20 +27,13 @@ const expo: ExpoConfig = {
   android: {
     package: 'com.freevpnrewards.app',
   },
-  // The local `vpn` native module (modules/vpn) auto-links via Expo modules; its
-  // own AndroidManifest contributes the VpnService + permissions.
-  plugins: ['react-native-google-mobile-ads'],
+  // AdMob app id is passed as PLUGIN PROPS — this version of the plugin reads it
+  // from here (not from a top-level key), and injects the manifest meta-data.
+  plugins: [['react-native-google-mobile-ads', { androidAppId: admobAndroidAppId }]],
   extra: {
     apiBaseUrl,
     eas: { projectId: easProjectId },
   },
 };
 
-// Dynamic-config shape: `expo` config + the react-native-google-mobile-ads block
-// as a SIBLING (the plugin reads the app id from here, not from inside `expo`).
-export default {
-  expo,
-  'react-native-google-mobile-ads': {
-    androidAppId: admobAndroidAppId,
-  },
-};
+export default expo;
