@@ -32,8 +32,13 @@ interface RequestOptions {
 }
 
 export async function apiFetch<T>(path: string, opts: RequestOptions = {}): Promise<T> {
-  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  const headers: Record<string, string> = {};
   if (opts.deviceId) headers['x-device-id'] = opts.deviceId;
+  // Only declare a JSON body when one exists — sending content-type with an empty
+  // body makes Fastify reject it (FST_ERR_CTP_EMPTY_JSON_BODY → 400) on body-less
+  // POSTs like /api/ads/session/start.
+  const hasBody = opts.body !== undefined;
+  if (hasBody) headers['content-type'] = 'application/json';
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
@@ -44,7 +49,7 @@ export async function apiFetch<T>(path: string, opts: RequestOptions = {}): Prom
     res = await fetch(`${API_BASE_URL}${path}`, {
       method: opts.method ?? 'GET',
       headers,
-      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+      body: hasBody ? JSON.stringify(opts.body) : undefined,
       signal: controller.signal,
     });
     text = await res.text();

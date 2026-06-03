@@ -19,13 +19,17 @@ interface RequestOptions {
 
 export async function apiFetch<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const token = useAuthStore.getState().token;
-  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  const headers: Record<string, string> = {};
   if (token) headers.authorization = `Bearer ${token}`;
+  // Only declare a JSON body when one exists — sending content-type with an empty
+  // body makes Fastify reject it (FST_ERR_CTP_EMPTY_JSON_BODY → 400) on DELETE/etc.
+  const hasBody = opts.body !== undefined;
+  if (hasBody) headers['content-type'] = 'application/json';
 
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method: opts.method ?? 'GET',
     headers,
-    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+    body: hasBody ? JSON.stringify(opts.body) : undefined,
   });
 
   if (res.status === 401) useAuthStore.getState().logout();
