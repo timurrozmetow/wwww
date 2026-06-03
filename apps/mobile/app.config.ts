@@ -26,7 +26,6 @@ const expo: ExpoConfig = {
   platforms: ['android'],
   android: {
     package: 'com.freevpnrewards.app',
-    versionCode: 1,
   },
   // The local `vpn` native module (modules/vpn) auto-links via Expo modules; its
   // own AndroidManifest contributes the VpnService + permissions.

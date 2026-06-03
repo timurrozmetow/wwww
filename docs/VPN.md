@@ -3,6 +3,12 @@
 > Архитектура и шаги доведения нативного VPN до рабочего состояния (Этап B).
 > Скелет лежит в `apps/mobile/modules/vpn/` (Expo local module). Kotlin здесь не
 > компилируется (нет Android SDK) — собирается на устройстве через `prebuild`.
+>
+> **СТАТУС: модуль ВРЕМЕННО ОТКЛЮЧЁН** для сборки control-plane APK (Этап A) —
+> файл автолинковки переименован в `expo-module.config.json.disabled`, поэтому
+> Gradle его не компилирует. **Чтобы включить (Этап B):** переименуй обратно в
+> `expo-module.config.json`, добей sing-box (`libbox.aar` + точки ниже), затем
+> `prebuild:clean` и сборку.
 
 ## Архитектура (CLAUDE.md §3)
 
