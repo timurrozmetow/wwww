@@ -1,6 +1,12 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { DeviceRegisterRequest } from '@vpn/types';
-import { fetchAppConfig, fetchBalance, fetchBanners, registerDevice } from '../api/endpoints';
+import {
+  fetchAppConfig,
+  fetchBalance,
+  fetchBanners,
+  fetchServers,
+  registerDevice,
+} from '../api/endpoints';
 import { useAppStore } from '../store/app-store';
 
 export function useRegisterDevice() {
@@ -46,6 +52,16 @@ export function useBanners(deviceId: string | null) {
     queryKey: ['banners', deviceId],
     queryFn: () => fetchBanners(deviceId as string),
     enabled: deviceId !== null,
+    staleTime: lowEnd ? 30 * 60 * 1000 : 5 * 60 * 1000,
+  });
+}
+
+/** Server catalog (cached; backend computes ping/quality — phone never pings). */
+export function useServers() {
+  const lowEnd = useLowEndMode();
+  return useQuery({
+    queryKey: ['vpn-servers'],
+    queryFn: fetchServers,
     staleTime: lowEnd ? 30 * 60 * 1000 : 5 * 60 * 1000,
   });
 }

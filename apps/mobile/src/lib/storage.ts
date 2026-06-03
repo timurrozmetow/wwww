@@ -3,9 +3,9 @@ import * as SecureStore from 'expo-secure-store';
 import { LANGUAGES, type Language } from '@vpn/types';
 
 const LANG_KEY = 'vpn.language';
-const ONBOARDED_KEY = 'vpn.onboarded';
 const DEVICE_ID_KEY = 'vpn.device_id';
 const LOW_END_KEY = 'vpn.low_end_mode';
+const SERVER_KEY = 'vpn.selected_server';
 
 function isLanguage(value: string | null): value is Language {
   return value !== null && (LANGUAGES as readonly string[]).includes(value);
@@ -21,18 +21,19 @@ export const storage = {
     await AsyncStorage.setItem(LANG_KEY, language);
   },
 
-  async getOnboarded(): Promise<boolean> {
-    return (await AsyncStorage.getItem(ONBOARDED_KEY)) === '1';
-  },
-  async setOnboarded(): Promise<void> {
-    await AsyncStorage.setItem(ONBOARDED_KEY, '1');
-  },
-
   async getDeviceId(): Promise<string | null> {
     return SecureStore.getItemAsync(DEVICE_ID_KEY);
   },
   async setDeviceId(deviceId: string): Promise<void> {
     await SecureStore.setItemAsync(DEVICE_ID_KEY, deviceId);
+  },
+
+  async getSelectedServerId(): Promise<string | null> {
+    return AsyncStorage.getItem(SERVER_KEY);
+  },
+  async setSelectedServerId(serverId: string | null): Promise<void> {
+    if (serverId === null) await AsyncStorage.removeItem(SERVER_KEY);
+    else await AsyncStorage.setItem(SERVER_KEY, serverId);
   },
 
   async getLowEndMode(): Promise<boolean> {

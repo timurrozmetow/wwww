@@ -8,6 +8,7 @@ import type {
   DeviceRegisterRequest,
   DeviceRegisterResponse,
   HeartbeatResponse,
+  VpnServerView,
 } from '@vpn/types';
 import { apiFetch } from './client';
 
@@ -43,6 +44,11 @@ export function fetchWaterfallConfig(): Promise<AdWaterfallConfig> {
 /** Opens an ad-watch attempt; the returned sessionId is the SSV custom data. */
 export function startAdSession(deviceId: string): Promise<AdSessionStartResponse> {
   return apiFetch('/api/ads/session/start', { method: 'POST', deviceId });
+}
+
+/** Public, safe server catalog — country/flag/name/ping/quality only (§7.2). */
+export function fetchServers(): Promise<VpnServerView[]> {
+  return apiFetch('/api/vpn/servers');
 }
 
 /** Active in-app banners targeted to this device (language/segment/date). */

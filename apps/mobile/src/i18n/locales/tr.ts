@@ -1,48 +1,34 @@
 import type { Translation } from './ru';
 
 export const tr: Translation = {
-  language: {
-    title: 'Dil seçin',
-    subtitle: 'Daha sonra ayarlardan değiştirebilirsiniz',
-  },
-  onboarding: {
-    next: 'İleri',
-    start: 'Başla',
-    slides: {
-      free: {
-        title: 'Ücretsiz VPN',
-        body: 'Abonelik ve kayıt olmadan hızlı ve güvenli erişim.',
-      },
-      reward: {
-        title: 'Reklam = süre',
-        body: 'İzlenen bir reklam — 30 dakika VPN.',
-      },
-      accumulate: {
-        title: 'Süre biriktirin',
-        body: 'Dakikalar saklanır ve birikir — bir yıla kadar.',
-      },
-      autostop: {
-        title: 'Otomatik kapanma',
-        body: 'Süre bittiğinde VPN otomatik olarak kapanır.',
-      },
-    },
-    privacy: 'Trafiğinizin geçmişini ve içeriğini saklamıyoruz.',
-  },
   home: {
-    greeting: 'Bağlanmaya hazır mısınız?',
-    balance: 'Süreniz',
+    timeLeft: 'Kalan süre',
     minutes: 'dk',
-    connect: 'Bağlan',
-    watchAd: 'Reklam izle +{{minutes}} dk',
-    selectServer: 'Sunucu seç',
+    hoursShort: 'sa',
     statusDisconnected: 'Bağlı değil',
-    comingSoon: 'Yakında',
+    connectSoon: 'Bağlantı yakında gelecek',
+    noServers: 'Sunucular yakında',
+    watchAd: 'Reklam izle +{{minutes}} dk',
     loadingAd: 'Reklam yükleniyor…',
     verifying: 'Dakikalar ekleniyor…',
     adError: 'Reklam yüklenemedi. Tekrar deneyin.',
+    rewardHint: '1 reklam = {{minutes}} dakika VPN',
+  },
+  servers: {
+    title: 'Sunucular',
+    ping: '{{ms}} ms',
+    recommended: 'önerilen',
+    auto: 'Otomatik',
+    autoHint: 'En iyi sunucu otomatik',
+    empty: 'Sunucu mevcut değil',
   },
   settings: {
+    title: 'Ayarlar',
+    language: 'Dil',
+    app: 'Uygulama',
     lowEndMode: 'Tasarruf modu',
     lowEndModeHint: 'Daha az animasyon ve yenileme — zayıf telefonlar ve dengesiz internet için.',
+    privacy: 'Trafiğinizin geçmişini ve içeriğini saklamıyoruz.',
+    version: 'Sürüm',
   },
 };

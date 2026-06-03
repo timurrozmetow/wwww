@@ -2,9 +2,10 @@ import { create } from 'zustand';
 import type { Language } from '@vpn/types';
 
 interface HydrationPayload {
-  language: Language | null;
+  language: Language;
   deviceId: string | null;
-  onboarded: boolean;
+  /** Persisted choice; null = "auto" (recommended server). */
+  selectedServerId: string | null;
   /** User-chosen data/battery saver; can also be forced on by remote config. */
   lowEndMode: boolean;
 }
@@ -15,19 +16,19 @@ interface AppState extends HydrationPayload {
   applyHydration: (payload: HydrationPayload) => void;
   setLanguage: (language: Language) => void;
   setDeviceId: (deviceId: string) => void;
-  setOnboarded: () => void;
+  setSelectedServerId: (serverId: string | null) => void;
   setLowEndMode: (lowEndMode: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
   hydrated: false,
-  language: null,
+  language: 'ru',
   deviceId: null,
-  onboarded: false,
+  selectedServerId: null,
   lowEndMode: false,
   applyHydration: (payload) => set({ ...payload, hydrated: true }),
   setLanguage: (language) => set({ language }),
   setDeviceId: (deviceId) => set({ deviceId }),
-  setOnboarded: () => set({ onboarded: true }),
+  setSelectedServerId: (selectedServerId) => set({ selectedServerId }),
   setLowEndMode: (lowEndMode) => set({ lowEndMode }),
 }));

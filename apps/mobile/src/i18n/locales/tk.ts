@@ -1,48 +1,34 @@
 import type { Translation } from './ru';
 
 export const tk: Translation = {
-  language: {
-    title: 'Dili saýlaň',
-    subtitle: 'Soňra sazlamalardan üýtgedip bilersiňiz',
-  },
-  onboarding: {
-    next: 'Indiki',
-    start: 'Başla',
-    slides: {
-      free: {
-        title: 'Mugt VPN',
-        body: 'Abuna ýazylman we hasaba alynman çalt we ygtybarly giriş.',
-      },
-      reward: {
-        title: 'Mahabat = wagt',
-        body: 'Bir görlen mahabat — 30 minut VPN.',
-      },
-      accumulate: {
-        title: 'Wagt toplaň',
-        body: 'Minutlar saklanýar we toplanýar — bir ýyla çenli.',
-      },
-      autostop: {
-        title: 'Awtomatiki öçmek',
-        body: 'Wagt gutaranda VPN awtomatiki öçýär.',
-      },
-    },
-    privacy: 'Biz trafigiňiziň taryhyny we mazmunyny saklamaýarys.',
-  },
   home: {
-    greeting: 'Birikmäge taýynmy?',
-    balance: 'Siziň wagtyňyz',
+    timeLeft: 'Galan wagt',
     minutes: 'min',
-    connect: 'Birikmek',
-    watchAd: 'Mahabat görmek +{{minutes}} min',
-    selectServer: 'Serweri saýlamak',
+    hoursShort: 'sag',
     statusDisconnected: 'Birikdirilmedik',
-    comingSoon: 'Tiz wagtda',
+    connectSoon: 'Birikme tiz wagtda goşular',
+    noServers: 'Serwerler tiz wagtda',
+    watchAd: 'Mahabat görmek +{{minutes}} min',
     loadingAd: 'Mahabat ýüklenýär…',
     verifying: 'Minutlar goşulýar…',
     adError: 'Mahabat ýüklenmedi. Gaýtadan synanyşyň.',
+    rewardHint: '1 mahabat = {{minutes}} minut VPN',
+  },
+  servers: {
+    title: 'Serwerler',
+    ping: '{{ms}} ms',
+    recommended: 'maslahat berilýän',
+    auto: 'Awto',
+    autoHint: 'Iň gowy serwer awtomatiki',
+    empty: 'Serwerler ýok',
   },
   settings: {
+    title: 'Sazlamalar',
+    language: 'Dil',
+    app: 'Programma',
     lowEndMode: 'Tygşytly režim',
     lowEndModeHint: 'Az animasiýa we täzeleniş — gowşak telefonlar we durnuksyz internet üçin.',
+    privacy: 'Biz trafigiňiziň taryhyny we mazmunyny saklamaýarys.',
+    version: 'Wersiýa',
   },
 };
