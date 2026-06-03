@@ -1,9 +1,21 @@
 # DEPLOY.md — backend на VPS под доменом (HTTPS)
 
 > Поднимает control-plane backend (Fastify + MySQL + Redis-AOF) за Caddy с
-> авто-TLS. После этого телефон ходит на `https://<домен>` и можно собирать APK
-> Этапа A. Файлы: [`docker-compose.prod.yml`](../docker-compose.prod.yml),
+> авто-TLS. После этого телефон ходит на `https://api.pipivpn.space` и можно
+> собирать APK Этапа A. Файлы: [`docker-compose.prod.yml`](../docker-compose.prod.yml),
 > [`deploy/`](../deploy/).
+
+## Твои значения (уже прописаны в конфигах)
+
+| Что                | Значение                                                              |
+| ------------------ | --------------------------------------------------------------------- |
+| API-хост           | `api.pipivpn.space`                                                   |
+| VPS IP             | `85.137.167.109`                                                      |
+| DNS A-запись       | `api.pipivpn.space` → `85.137.167.109`                                |
+| Мобилка (eas.json) | `EXPO_PUBLIC_API_BASE_URL=https://api.pipivpn.space` (preview + prod) |
+| `.env.production`  | `DOMAIN=api.pipivpn.space`                                            |
+
+Осталось: создать A-запись, открыть 80/443, заполнить пароли в `deploy/.env.production`.
 
 ## 0. Что нужно от тебя (то самое «говори что надо»)
 
@@ -18,7 +30,12 @@
 
 ## 1. DNS
 
-Создай A-запись: `api.твойдомен` → `<IP VPS>`. Дождись пропагации (`dig api.твойдомен +short` должен вернуть IP VPS).
+В DNS домена `pipivpn.space` создай **A-запись**: `api` → `85.137.167.109`
+(полное имя `api.pipivpn.space`). Проверь пропагацию:
+
+```bash
+dig api.pipivpn.space +short    # должно вернуть 85.137.167.109
+```
 
 ## 2. VPS: Docker
 
@@ -62,19 +79,19 @@ $C admin:create   # админ из ADMIN_EMAIL/ADMIN_PASSWORD
 ## 6. Проверка
 
 ```bash
-curl https://<домен>/health           # {"status":"ok",...}
+curl https://api.pipivpn.space/health           # {"status":"ok",...}
 docker compose -f docker-compose.prod.yml logs -f backend caddy
 ```
 
 - `/health` отвечает по HTTPS, сертификат валиден;
-- логин в админку: `POST https://<домен>/api/admin/login` (или открыть админ-SPA, шаг 9).
+- логин в админку: `POST https://api.pipivpn.space/api/admin/login` (или открыть админ-SPA, шаг 9).
 
 ## 7. Подключить мобилку (Этап A)
 
 В [`apps/mobile/eas.json`](../apps/mobile/eas.json) профиль `preview`:
 
 ```json
-"EXPO_PUBLIC_API_BASE_URL": "https://<домен>"
+"EXPO_PUBLIC_API_BASE_URL": "https://api.pipivpn.space"
 ```
 
 Затем `pnpm --filter @vpn/mobile build:preview` → поставить APK на телефон (см. [BUILD.md](BUILD.md)).
@@ -82,7 +99,7 @@ docker compose -f docker-compose.prod.yml logs -f backend caddy
 ## 8. AdMob SSV
 
 Reward начисляется только по верифицированному SSV-коллбэку. Коллбэк должен
-доставать `https://<домен>/api/rewards/admob/ssv` (Caddy уже проксирует). Держи
+доставать `https://api.pipivpn.space/api/rewards/admob/ssv` (Caddy уже проксирует). Держи
 `ADMOB_SSV_VERIFY=true` и заполни `ADMOB_SSV_KEY`.
 
 ## 9. Админ-SPA (опционально)
@@ -90,7 +107,7 @@ Reward начисляется только по верифицированном
 Дашборд — отдельное Vite-приложение. Проще всего запускать локально, указывая на прод:
 
 ```bash
-VITE_API_BASE_URL=https://<домен> pnpm --filter @vpn/admin dev
+VITE_API_BASE_URL=https://api.pipivpn.space pnpm --filter @vpn/admin dev
 ```
 
 Либо собрать (`pnpm --filter @vpn/admin build`) и раздать статику отдельным сервисом/Caddy-блоком.

@@ -13,9 +13,13 @@ const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://10.0.2.2:3000
 const admobAndroidAppId =
   process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID ?? 'ca-app-pub-3940256099942544~3347511713';
 
-const config: ExpoConfig = {
+// Not secret — appears in the public expo.dev URL. Env wins for CI overrides.
+const easProjectId = process.env.EAS_PROJECT_ID ?? '3316dd85-c3a1-4f43-b830-7ecd9b17749b';
+
+const expo: ExpoConfig = {
   name: 'Free VPN Rewards',
   slug: 'free-vpn-rewards',
+  owner: 'thebestof',
   version: '0.0.1',
   orientation: 'portrait',
   userInterfaceStyle: 'dark',
@@ -29,13 +33,14 @@ const config: ExpoConfig = {
   plugins: ['react-native-google-mobile-ads'],
   extra: {
     apiBaseUrl,
-    eas: { projectId: process.env.EAS_PROJECT_ID ?? '' },
+    eas: { projectId: easProjectId },
   },
 };
 
+// Dynamic-config shape: `expo` config + the react-native-google-mobile-ads block
+// as a SIBLING (the plugin reads the app id from here, not from inside `expo`).
 export default {
-  ...config,
-  // react-native-google-mobile-ads reads its config from this top-level key.
+  expo,
   'react-native-google-mobile-ads': {
     androidAppId: admobAndroidAppId,
   },

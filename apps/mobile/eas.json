@@ -16,7 +16,7 @@
       "distribution": "internal",
       "android": { "buildType": "apk" },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://API_BASE_URL_PLACEHOLDER",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.pipivpn.space",
         "EXPO_PUBLIC_ADMOB_ANDROID_APP_ID": "ca-app-pub-3940256099942544~3347511713"
       }
     },
@@ -24,7 +24,7 @@
       "autoIncrement": true,
       "android": { "buildType": "app-bundle" },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://API_BASE_URL_PLACEHOLDER"
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.pipivpn.space"
       }
     }
   },

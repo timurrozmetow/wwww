@@ -14,12 +14,14 @@ services:
       - '3306:3306'
     volumes:
       - mysql_data:/var/lib/mysql
-    command: ['--default-authentication-plugin=caching_sha2_password']
+    # caching_sha2_password is the default in MySQL 8.x; the old
+    # --default-authentication-plugin flag was REMOVED in 8.4 and crashes startup.
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-proot_password']
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 12
+      start_period: 40s
 
   redis:
     image: redis:7-alpine
