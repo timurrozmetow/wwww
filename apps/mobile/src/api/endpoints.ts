@@ -51,6 +51,14 @@ export function fetchServers(): Promise<VpnServerView[]> {
   return apiFetch('/api/vpn/servers');
 }
 
+/**
+ * Asks the backend to re-measure latency (throttled server-side) and returns the
+ * refreshed catalog. The phone itself never pings (§6) — it just triggers + reads.
+ */
+export function recheckServers(): Promise<VpnServerView[]> {
+  return apiFetch('/api/vpn/servers/recheck', { method: 'POST' });
+}
+
 /** Active in-app banners targeted to this device (language/segment/date). */
 export function fetchBanners(deviceId: string): Promise<BannerView[]> {
   return apiFetch('/api/notifications/in-app', { deviceId });

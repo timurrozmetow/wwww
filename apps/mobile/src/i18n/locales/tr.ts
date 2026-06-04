@@ -1,6 +1,10 @@
 import type { Translation } from './ru';
 
 export const tr: Translation = {
+  welcome: {
+    greeting: 'Hoş geldiniz',
+    tagline: 'Sınırsız güvenli internet',
+  },
   home: {
     timeLeft: 'Kalan süre',
     minutes: 'dk',
@@ -21,6 +25,7 @@ export const tr: Translation = {
     auto: 'Otomatik',
     autoHint: 'En iyi sunucu otomatik',
     empty: 'Sunucu mevcut değil',
+    refresh: 'Pingi yenilemek için çekin',
   },
   settings: {
     title: 'Ayarlar',

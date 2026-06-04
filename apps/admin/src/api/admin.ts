@@ -8,6 +8,7 @@ import type {
   AdminPushCampaignCreate,
   AdminVpnImportRequest,
   AdminVpnImportResult,
+  AdminVpnPingResult,
   AdminVpnProvider,
   AdminVpnProviderCreate,
   AdminVpnServer,
@@ -61,6 +62,9 @@ export const adminApi = {
 
   importVpnSource: (body: AdminVpnImportRequest): Promise<AdminVpnImportResult> =>
     apiFetch('/api/admin/vpn/import', { method: 'POST', body }),
+
+  pingVpnServers: (): Promise<AdminVpnPingResult> =>
+    apiFetch('/api/admin/vpn/ping', { method: 'POST' }),
 
   vpnServers: (): Promise<AdminVpnServer[]> => apiFetch('/api/admin/vpn/servers'),
 

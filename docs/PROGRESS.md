@@ -4,6 +4,49 @@
 
 ---
 
+## UX «pro max» — бренд NURSEYIT HJ, приветствие-анимация, пинг (телефон + админка)
+
+**Дата:** 2026-06-04 · **Статус:** ✅ собирается и проверено (mobile `typecheck` ✅ +
+release-бандл `expo export:embed` EXIT=0, логотип-ассеты в бандле; backend `test`
+171 ✅; admin `typecheck`/lint ✅). Без новых нативных зависимостей.
+
+- **Бренд-ассеты из логотипа.** `photo/full_logo_navy.svg` (монограмма «NS»,
+  wordmark NURSEYIT HJ) растеризован в PNG (resvg, разово, вне репо) →
+  [apps/mobile/assets](../apps/mobile/assets): `logo-light.png` (белый полный —
+  для приветствия), `logo-mark-light.png` (белая монограмма — шапка Home),
+  `icon.png` + `adaptive-icon.png` (иконка приложения, белая монограмма на
+  фирменном navy `#0B1120`). Иконка прописана в
+  [app.config.ts](../apps/mobile/app.config.ts) (`icon` + `adaptiveIcon`),
+  имя приложения → «NURSEYIT HJ VPN».
+- **Приветственная анимация** ([WelcomeScreen.tsx](../apps/mobile/src/screens/WelcomeScreen.tsx)):
+  cyan-гало «дышит» за логотипом, марка fade+scale, локализованное приветствие
+  всплывает (i18n `welcome.greeting/tagline` ru/tr/tk). Всё на RN `Animated` +
+  `useNativeDriver` → 60 FPS на слабых телефонах, без Reanimated/Lottie. Старый
+  `SplashScreen` удалён; [RootNavigator](../apps/mobile/src/navigation/RootNavigator.tsx)
+  держит Welcome пока не готовы И гидратация, И анимация.
+- **Home полирован** ([HomeScreen.tsx](../apps/mobile/src/screens/HomeScreen.tsx)):
+  бренд-шапка (марка + «NURSEYIT HJ») + ⚙, крупный hero-блок времени по центру,
+  плавный entrance (fade-up). [ConnectButton](../apps/mobile/src/components/ConnectButton.tsx)
+  — пульсирующее гало при connecting/connected + spring на нажатие.
+- **Пинг (бэкенд считает, §6 — телефон не пингует).**
+  [VpnHealthService](../apps/backend/src/modules/vpn/vpn-health.service.ts) — общий
+  TCP-замер ([tcp-ping.ts](../apps/backend/src/modules/vpn/tcp-ping.ts), порт из
+  configBlob), обновляет pingMs/status/recentFailures. **Авто-обновление:**
+  периодический health-check (`startHealthScheduler`, раз в 3 мин; останавливается
+  на `onClose`; выкл. в тестах; BullMQ — апгрейд §14). **Триггеры:** админ-кнопка
+  «Check ping» (`POST /api/admin/vpn/ping`) и пользовательский
+  `POST /api/vpn/servers/recheck` (throttle 15с, возвращает свежий каталог).
+  **Телефон** — кнопка «Check ping» (⟳) в шапке + pull-to-refresh
+  ([ServerSelectScreen.tsx](../apps/mobile/src/screens/ServerSelectScreen.tsx))
+  дёргают recheck; пинг показан цветом по латентности + сигнал-бары
+  ([flag.ts](../apps/mobile/src/lib/flag.ts) `pingColor`/`signalBars`). Connect-кнопка
+  «дышит» idle-гало. Тесты: `pingAll` 2 ✅ (стаб-пингер, чтение порта из configBlob).
+
+**Проверки:** mobile `typecheck` ✅ + `expo export:embed` ✅ EXIT=0 (1046 модулей,
+логотипы в ассетах) · backend `test` ✅ 171 (+2 ping) · admin `typecheck`/eslint ✅.
+
+---
+
 ## Этап B (часть 1) — конвейер «happ-ссылка → sing-box config» (бэкенд готов + тесты)
 
 **Дата:** 2026-06-03 · **Статус:** ✅ backend-конвейер полностью готов и покрыт

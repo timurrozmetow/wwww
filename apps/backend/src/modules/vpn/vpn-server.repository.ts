@@ -19,12 +19,19 @@ export interface NewVpnServer {
   countryPriority?: number;
 }
 
+export interface ServerHealth {
+  pingMs: number;
+  status: string;
+  recentFailures: number;
+}
+
 export interface VpnServerRepository {
   listEnabled(): Promise<VpnServerRow[]>;
   listAll(): Promise<VpnServerRow[]>;
   findById(id: string): Promise<VpnServerRow | null>;
   create(input: NewVpnServer): Promise<VpnServerRow>;
   setEnabled(id: string, enabled: boolean): Promise<void>;
+  updateHealth(id: string, health: ServerHealth): Promise<void>;
   delete(id: string): Promise<void>;
 }
 
@@ -67,6 +74,17 @@ export class DrizzleVpnServerRepository implements VpnServerRepository {
 
   async setEnabled(id: string, enabled: boolean): Promise<void> {
     await getDb().update(vpnServers).set({ enabled }).where(eq(vpnServers.id, id));
+  }
+
+  async updateHealth(id: string, health: ServerHealth): Promise<void> {
+    await getDb()
+      .update(vpnServers)
+      .set({
+        pingMs: health.pingMs,
+        status: health.status,
+        recentFailures: health.recentFailures,
+      })
+      .where(eq(vpnServers.id, id));
   }
 
   async delete(id: string): Promise<void> {
@@ -120,6 +138,15 @@ export class InMemoryVpnServerRepository implements VpnServerRepository {
   async setEnabled(id: string, enabled: boolean): Promise<void> {
     const row = this.byId.get(id);
     if (row) row.enabled = enabled;
+  }
+
+  async updateHealth(id: string, health: ServerHealth): Promise<void> {
+    const row = this.byId.get(id);
+    if (row) {
+      row.pingMs = health.pingMs;
+      row.status = health.status;
+      row.recentFailures = health.recentFailures;
+    }
   }
 
   async delete(id: string): Promise<void> {

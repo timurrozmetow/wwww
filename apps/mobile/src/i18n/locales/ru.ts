@@ -1,4 +1,8 @@
 export const ru = {
+  welcome: {
+    greeting: 'Добро пожаловать',
+    tagline: 'Безопасный интернет без границ',
+  },
   home: {
     timeLeft: 'Осталось времени',
     minutes: 'мин',
@@ -19,6 +23,7 @@ export const ru = {
     auto: 'Авто',
     autoHint: 'Лучший сервер автоматически',
     empty: 'Серверы пока недоступны',
+    refresh: 'Потяните, чтобы обновить пинг',
   },
   settings: {
     title: 'Настройки',

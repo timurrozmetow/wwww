@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, Text } from 'react-native';
 import { colors, radius } from '../theme';
 
 export type ConnectStatus = 'disconnected' | 'connecting' | 'connected';
@@ -15,32 +16,88 @@ function ringColor(status: ConnectStatus): string {
   return colors.primary;
 }
 
-/** Big circular power button — the centrepiece of the Home screen. */
+/**
+ * Big circular power button — the centrepiece of Home. A halo pulses while
+ * connecting/connected, and the ring springs on press. All on the native driver.
+ */
 export function ConnectButton({ status, disabled = false, onPress }: Props) {
   const color = disabled ? colors.border : ringColor(status);
+  const active = status === 'connecting' || status === 'connected';
+
+  // Always breathe: subtle when idle, stronger/faster when active.
+  const maxOpacity = active ? 0.5 : 0.16;
+  const maxScale = active ? 1.18 : 1.08;
+  const duration = active ? 1100 : 1900;
+
+  const pulse = useRef(new Animated.Value(0)).current;
+  const press = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [duration, pulse]);
+
   return (
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [styles.wrap, pressed && !disabled ? styles.pressed : null]}
+      onPressIn={() =>
+        !disabled && Animated.spring(press, { toValue: 0.95, useNativeDriver: true }).start()
+      }
+      onPressOut={() =>
+        Animated.spring(press, { toValue: 1, friction: 4, useNativeDriver: true }).start()
+      }
+      style={styles.wrap}
     >
-      <View style={[styles.outerRing, { borderColor: color }]}>
-        <View style={[styles.inner, { backgroundColor: disabled ? colors.card : color }]}>
+      <Animated.View
+        style={[
+          styles.halo,
+          {
+            borderColor: color,
+            opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0, maxOpacity] }),
+            transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, maxScale] }) }],
+          },
+        ]}
+      />
+      <Animated.View style={[styles.outerRing, { borderColor: color, transform: [{ scale: press }] }]}>
+        <Animated.View style={[styles.inner, { backgroundColor: disabled ? colors.card : color }]}>
           <Text style={[styles.icon, { color: disabled ? colors.textFaint : colors.text }]}>⏻</Text>
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
+    width: 224,
+    height: 224,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pressed: {
-    opacity: 0.85,
+  halo: {
+    position: 'absolute',
+    width: 196,
+    height: 196,
+    borderRadius: radius.pill,
+    borderWidth: 2,
   },
   outerRing: {
     width: 196,

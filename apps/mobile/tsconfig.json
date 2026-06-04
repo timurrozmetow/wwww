@@ -4,8 +4,16 @@
     "strict": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "expo-env.d.ts", ".expo/types/**/*.ts"],
-  // modules/ (the local native VPN module) is compiled by Expo during the Android
-  // build and imports expo-modules-core; it is excluded from the app typecheck.
-  "exclude": ["node_modules", "modules", "android", "ios", ".expo", "dist"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "modules",
+    "android",
+    "ios",
+    ".expo",
+    "dist"
+  ]
 }

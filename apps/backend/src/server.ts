@@ -100,6 +100,7 @@ import {
 } from './modules/vpn/vpn-provider.repository.js';
 import { RedisVpnSessionStore, type VpnSessionStore } from './modules/vpn/vpn-session-store.js';
 import { loadHappKeyringFromEnv } from './modules/vpn/happ-decoder.js';
+import { startHealthScheduler, VpnHealthService } from './modules/vpn/vpn-health.service.js';
 import { VpnService } from './modules/vpn/vpn.service.js';
 import { AdminVpnService } from './modules/admin/admin-vpn.service.js';
 import { deviceRoutes } from './modules/device/device.routes.js';
@@ -304,11 +305,14 @@ export async function buildServer(opts: BuildServerOptions = {}): Promise<Fastif
     repos.remoteConfig,
     repos.emergencyLogs,
   );
+  const vpnHealthService = new VpnHealthService(repos.vpnServers);
   const adminVpnService = new AdminVpnService(
     repos.vpnProviders,
     repos.vpnServers,
     repos.auditLogs,
     loadHappKeyringFromEnv(),
+    undefined,
+    vpnHealthService,
   );
   const bannerService = new BannerService(
     repos.banners,
@@ -357,7 +361,14 @@ export async function buildServer(opts: BuildServerOptions = {}): Promise<Fastif
     repos.devices,
     repos.ledger,
   );
-  await app.register(vpnRoutes, { vpn: vpnService });
+  await app.register(vpnRoutes, { vpn: vpnService, health: vpnHealthService });
+
+  // Periodic backend health-check keeps server pings fresh (§6) — the phone just
+  // re-reads /api/vpn/servers. Disabled in tests. (BullMQ is the §14 scale-up.)
+  if (env.NODE_ENV !== 'test') {
+    const stopHealthScheduler = startHealthScheduler(vpnHealthService, app.log);
+    app.addHook('onClose', () => stopHealthScheduler());
+  }
 
   return app;
 }

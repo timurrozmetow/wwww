@@ -299,6 +299,9 @@ export const adminRoutes: FastifyPluginAsync<AdminRoutesOptions> = async (app, o
       (req) => opts.vpn.importFromSource(req.user.sub, req.body),
     );
 
+    // Measure TCP latency to every enabled server (backend-side, §6).
+    guarded.post('/api/admin/vpn/ping', (req) => opts.vpn.pingAll(req.user.sub));
+
     guarded.get('/api/admin/vpn/servers', () => opts.vpn.listServers());
 
     guarded.post<{ Body: AdminVpnServerCreate }>(

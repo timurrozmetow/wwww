@@ -15,3 +15,19 @@ export function qualityColor(quality: ServerQuality): string {
   if (quality === 'orange') return colors.warning;
   return colors.danger;
 }
+
+/** Latency colour for the ping label: fast=green, ok=amber, slow/dead=red. */
+export function pingColor(ms: number): string {
+  if (ms <= 0) return colors.textFaint;
+  if (ms <= 80) return colors.success;
+  if (ms <= 180) return colors.warning;
+  return colors.danger;
+}
+
+/** Signal-strength glyph from latency (▂▄▆ filled by quality). */
+export function signalBars(ms: number): string {
+  if (ms <= 0) return '▁▁▁';
+  if (ms <= 80) return '▂▄▆';
+  if (ms <= 180) return '▂▄▁';
+  return '▂▁▁';
+}

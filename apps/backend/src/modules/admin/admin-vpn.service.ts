@@ -1,6 +1,8 @@
 import type {
   AdminVpnImportRequest,
   AdminVpnImportResult,
+  AdminVpnPingEntry,
+  AdminVpnPingResult,
   AdminVpnProvider,
   AdminVpnProviderCreate,
   AdminVpnServer,
@@ -14,6 +16,7 @@ import {
   SubscriptionError,
   type SubscriptionFetcher,
 } from '../vpn/subscription.js';
+import { VpnHealthService } from '../vpn/vpn-health.service.js';
 import type { VpnProviderRepository, VpnProviderRow } from '../vpn/vpn-provider.repository.js';
 import type { VpnServerRepository, VpnServerRow } from '../vpn/vpn-server.repository.js';
 import type { AuditLogRepository } from './admin.repository.js';
@@ -47,6 +50,8 @@ export class AdminVpnService {
     private readonly happKeyring: HappKeyring = {},
     /** Subscription fetcher override (tests inject a stub). */
     private readonly fetcher?: SubscriptionFetcher,
+    /** Shared health service (measures latency). Tests inject one with a stub pinger. */
+    private readonly health: VpnHealthService = new VpnHealthService(servers),
   ) {}
 
   async listProviders(): Promise<AdminVpnProvider[]> {
@@ -143,6 +148,21 @@ export class AdminVpnService {
       targetId: provider.id,
     });
     return { sourceKind: resolved.sourceKind, imported, total: imported.length };
+  }
+
+  /**
+   * Measures TCP latency to every enabled server (backend-side, §6) and updates
+   * pingMs/status/recentFailures. The phone just re-reads /api/vpn/servers.
+   */
+  async pingAll(adminId: number): Promise<AdminVpnPingResult> {
+    const results: AdminVpnPingEntry[] = await this.health.pingAll();
+    await this.audit.record({
+      adminId,
+      action: 'vpn.ping',
+      targetType: 'vpn_provider',
+      targetId: 'all',
+    });
+    return { checked: results.length, results };
   }
 
   async toggleServer(adminId: number, id: string, enabled: boolean): Promise<void> {

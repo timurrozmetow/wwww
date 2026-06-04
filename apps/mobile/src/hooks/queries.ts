@@ -1,10 +1,11 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import type { DeviceRegisterRequest } from '@vpn/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { DeviceRegisterRequest, VpnServerView } from '@vpn/types';
 import {
   fetchAppConfig,
   fetchBalance,
   fetchBanners,
   fetchServers,
+  recheckServers,
   registerDevice,
 } from '../api/endpoints';
 import { useAppStore } from '../store/app-store';
@@ -63,5 +64,14 @@ export function useServers() {
     queryKey: ['vpn-servers'],
     queryFn: fetchServers,
     staleTime: lowEnd ? 30 * 60 * 1000 : 5 * 60 * 1000,
+  });
+}
+
+/** "Check ping": asks the backend to re-measure, then updates the cached catalog. */
+export function useRecheckServers() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: recheckServers,
+    onSuccess: (servers: VpnServerView[]) => qc.setQueryData(['vpn-servers'], servers),
   });
 }

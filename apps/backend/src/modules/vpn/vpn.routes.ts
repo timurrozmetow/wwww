@@ -9,10 +9,12 @@ import type {
   VpnSessionStopRequest,
 } from '@vpn/types';
 import { NotFoundError } from '../../lib/errors.js';
+import type { VpnHealthService } from './vpn-health.service.js';
 import type { VpnService } from './vpn.service.js';
 
 interface VpnRoutesOptions {
   vpn: VpnService;
+  health: VpnHealthService;
 }
 
 const deviceIdHeaderSchema = {
@@ -35,6 +37,13 @@ const sessionBodySchema = {
 
 export const vpnRoutes: FastifyPluginAsync<VpnRoutesOptions> = async (app, opts) => {
   app.get('/api/vpn/servers', (): Promise<VpnServerView[]> => opts.vpn.listServers());
+
+  // User-facing "check ping": triggers a backend-side sweep (throttled so taps
+  // don't stack), then returns the refreshed catalog. The phone never pings (§6).
+  app.post('/api/vpn/servers/recheck', async (): Promise<VpnServerView[]> => {
+    await opts.health.pingAllThrottled();
+    return opts.vpn.listServers();
+  });
 
   app.get('/api/vpn/recommended', (): Promise<VpnRecommendation> => opts.vpn.recommend());
 

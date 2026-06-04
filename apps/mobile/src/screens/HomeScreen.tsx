@@ -1,15 +1,17 @@
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Button } from '../components/Button';
 import { ConnectButton } from '../components/ConnectButton';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { useWatchAd } from '../features/ads/useWatchAd';
 import { useAppConfig, useBalance, useBanners, useServers } from '../hooks/queries';
-import { countryFlag, qualityColor } from '../lib/flag';
+import { countryFlag, pingColor, qualityColor } from '../lib/flag';
 import { useAppStore } from '../store/app-store';
 import type { RootStackParamList } from '../navigation/types';
 import { colors, radius, spacing } from '../theme';
+import MARK from '../../assets/logo-mark-light.png';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -23,6 +25,17 @@ export function HomeScreen({ navigation }: Props) {
   const banners = useBanners(deviceId);
   const servers = useServers();
   const { watch, state: watchState } = useWatchAd();
+
+  // Gentle entrance — content fades up once on mount (native driver → 60 FPS).
+  const enter = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(enter, {
+      toValue: 1,
+      duration: 440,
+      delay: 60,
+      useNativeDriver: true,
+    }).start();
+  }, [enter]);
 
   const minutes = balance.data?.balanceMinutes ?? 0;
   const rewardMinutes = config.data?.rewardMinutesPerAd ?? 30;
@@ -40,8 +53,31 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <View style={styles.topBar}>
-        <View>
+      <Animated.View
+        style={[
+          styles.flex,
+          {
+            opacity: enter,
+            transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
+          },
+        ]}
+      >
+        <View style={styles.topBar}>
+          <View style={styles.brand}>
+            <Image source={MARK} style={styles.brandMark} resizeMode="contain" />
+            <Text style={styles.brandName}>NURSEYIT HJ</Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => navigation.navigate('Settings')}
+            hitSlop={12}
+            style={({ pressed }) => [styles.gear, pressed ? styles.gearPressed : null]}
+          >
+            <Text style={styles.gearIcon}>⚙</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.timeBlock}>
           <Text style={styles.timeLabel}>{t('home.timeLeft')}</Text>
           {balance.isLoading ? (
             <ActivityIndicator color={colors.primary} style={styles.timeSpinner} />
@@ -49,100 +85,116 @@ export function HomeScreen({ navigation }: Props) {
             <Text style={styles.timeValue}>{timeStr}</Text>
           )}
         </View>
+
+        {banner ? (
+          <View style={styles.bannerCard}>
+            <Text style={styles.bannerTitle}>{banner.title}</Text>
+            <Text style={styles.bannerBody}>{banner.body}</Text>
+          </View>
+        ) : null}
+
         <Pressable
           accessibilityRole="button"
-          onPress={() => navigation.navigate('Settings')}
-          hitSlop={12}
-          style={({ pressed }) => [styles.gear, pressed ? styles.gearPressed : null]}
+          onPress={() => navigation.navigate('ServerSelect')}
+          style={({ pressed }) => [styles.serverCard, pressed ? styles.serverPressed : null]}
         >
-          <Text style={styles.gearIcon}>⚙</Text>
+          {server ? (
+            <>
+              <Text style={styles.serverFlag}>{countryFlag(server.country)}</Text>
+              <View style={styles.serverText}>
+                <Text style={styles.serverName}>{server.name}</Text>
+                <Text style={styles.serverMeta}>
+                  {server.city ? `${server.city} · ` : ''}
+                  <Text style={{ color: pingColor(server.pingMs) }}>
+                    {t('servers.ping', { ms: server.pingMs })}
+                  </Text>
+                </Text>
+              </View>
+              <View style={[styles.dot, { backgroundColor: qualityColor(server.quality) }]} />
+              <Text style={styles.chevron}>›</Text>
+            </>
+          ) : (
+            <Text style={styles.serverEmpty}>{t('home.noServers')}</Text>
+          )}
         </Pressable>
-      </View>
 
-      {banner ? (
-        <View style={styles.bannerCard}>
-          <Text style={styles.bannerTitle}>{banner.title}</Text>
-          <Text style={styles.bannerBody}>{banner.body}</Text>
+        <View style={styles.center}>
+          {/* VPN connect lands in Stage B (sing-box) — disabled but центральный. */}
+          <ConnectButton status="disconnected" disabled />
+          <Text style={styles.status}>{t('home.statusDisconnected')}</Text>
+          <Text style={styles.comingSoon}>{t('home.connectSoon')}</Text>
         </View>
-      ) : null}
 
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => navigation.navigate('ServerSelect')}
-        style={({ pressed }) => [styles.serverCard, pressed ? styles.serverPressed : null]}
-      >
-        {server ? (
-          <>
-            <Text style={styles.serverFlag}>{countryFlag(server.country)}</Text>
-            <View style={styles.serverText}>
-              <Text style={styles.serverName}>{server.name}</Text>
-              <Text style={styles.serverMeta}>
-                {server.city ? `${server.city} · ` : ''}
-                {t('servers.ping', { ms: server.pingMs })}
+        <View style={styles.bottom}>
+          {busy ? (
+            <View style={styles.busyRow}>
+              <ActivityIndicator color={colors.primary} />
+              <Text style={styles.busyText}>
+                {watchState === 'verifying' ? t('home.verifying') : t('home.loadingAd')}
               </Text>
             </View>
-            <View style={[styles.dot, { backgroundColor: qualityColor(server.quality) }]} />
-            <Text style={styles.chevron}>›</Text>
-          </>
-        ) : (
-          <Text style={styles.serverEmpty}>{t('home.noServers')}</Text>
-        )}
-      </Pressable>
-
-      <View style={styles.center}>
-        {/* VPN connect lands in Stage B (sing-box) — disabled but центральный. */}
-        <ConnectButton status="disconnected" disabled />
-        <Text style={styles.status}>{t('home.statusDisconnected')}</Text>
-        <Text style={styles.comingSoon}>{t('home.connectSoon')}</Text>
-      </View>
-
-      <View style={styles.bottom}>
-        {busy ? (
-          <View style={styles.busyRow}>
-            <ActivityIndicator color={colors.primary} />
-            <Text style={styles.busyText}>
-              {watchState === 'verifying' ? t('home.verifying') : t('home.loadingAd')}
-            </Text>
-          </View>
-        ) : (
-          <>
-            <Button
-              label={t('home.watchAd', { minutes: rewardMinutes })}
-              onPress={() => void watch()}
-              disabled={!deviceId}
-            />
-            {watchState === 'error' ? (
-              <Text style={styles.errorText}>{t('home.adError')}</Text>
-            ) : (
-              <Text style={styles.rewardHint}>
-                {t('home.rewardHint', { minutes: rewardMinutes })}
-              </Text>
-            )}
-          </>
-        )}
-      </View>
+          ) : (
+            <>
+              <Button
+                label={t('home.watchAd', { minutes: rewardMinutes })}
+                onPress={() => void watch()}
+                disabled={!deviceId}
+              />
+              {watchState === 'error' ? (
+                <Text style={styles.errorText}>{t('home.adError')}</Text>
+              ) : (
+                <Text style={styles.rewardHint}>
+                  {t('home.rewardHint', { minutes: rewardMinutes })}
+                </Text>
+              )}
+            </>
+          )}
+        </View>
+      </Animated.View>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   topBar: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  brandMark: {
+    width: 30,
+    height: 30,
+  },
+  brandName: {
+    color: colors.textMuted,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+  },
+  timeBlock: {
+    marginTop: spacing.xl,
+    alignItems: 'center',
   },
   timeLabel: {
     color: colors.textMuted,
     fontSize: 13,
+    letterSpacing: 0.3,
   },
   timeValue: {
     color: colors.text,
-    fontSize: 28,
+    fontSize: 34,
     fontWeight: '800',
-    marginTop: 2,
+    marginTop: 4,
   },
   timeSpinner: {
-    alignSelf: 'flex-start',
     marginTop: spacing.sm,
   },
   gear: {
@@ -163,7 +215,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   bannerCard: {
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
     backgroundColor: colors.bgElevated,
     borderRadius: radius.md,
     borderWidth: 1,

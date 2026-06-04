@@ -1,7 +1,16 @@
+import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '../theme';
 
-export function ScreenHeader({ title, onBack }: { title: string; onBack: () => void }) {
+export function ScreenHeader({
+  title,
+  onBack,
+  right,
+}: {
+  title: string;
+  onBack: () => void;
+  right?: ReactNode;
+}) {
   return (
     <View style={styles.row}>
       <Pressable
@@ -13,6 +22,8 @@ export function ScreenHeader({ title, onBack }: { title: string; onBack: () => v
         <Text style={styles.chevron}>‹</Text>
       </Pressable>
       <Text style={styles.title}>{title}</Text>
+      <View style={styles.spacer} />
+      {right}
     </View>
   );
 }
@@ -23,6 +34,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     marginBottom: spacing.lg,
+  },
+  spacer: {
+    flex: 1,
   },
   back: {
     width: 40,

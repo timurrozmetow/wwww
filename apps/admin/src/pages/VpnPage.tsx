@@ -29,6 +29,7 @@ export function VpnPage() {
   const remove = useMutation({ mutationFn: adminApi.deleteVpnServer, onSuccess: invalidate });
   const create = useMutation({ mutationFn: adminApi.createVpnServer, onSuccess: invalidate });
   const importSource = useMutation({ mutationFn: adminApi.importVpnSource, onSuccess: invalidate });
+  const ping = useMutation({ mutationFn: adminApi.pingVpnServers, onSuccess: invalidate });
 
   const [form, setForm] = useState({ providerId: '', country: '', name: '', pingMs: 50 });
   const [importForm, setImportForm] = useState({ providerId: '', source: '', country: '' });
@@ -148,7 +149,24 @@ export function VpnPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-400">Servers</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">Servers</h2>
+          <div className="flex items-center gap-3">
+            {ping.isSuccess ? (
+              <span className="text-xs text-green-400">Pinged {ping.data.checked} server(s)</span>
+            ) : null}
+            {ping.isError ? (
+              <span className="text-xs text-red-400">{(ping.error as Error).message}</span>
+            ) : null}
+            <button
+              onClick={() => ping.mutate()}
+              disabled={ping.isPending}
+              className="rounded-md border border-slate-700 px-3 py-1.5 text-xs hover:border-blue-500 disabled:opacity-50"
+            >
+              {ping.isPending ? 'Checking…' : 'Check ping'}
+            </button>
+          </div>
+        </div>
         <div className="overflow-hidden rounded-xl border border-slate-800">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-900 text-slate-400">

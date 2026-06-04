@@ -592,6 +592,19 @@ export interface AdminVpnImportResult {
   total: number;
 }
 
+export interface AdminVpnPingEntry {
+  id: string;
+  name: string;
+  /** Round-trip ms, or null if the server didn't answer. */
+  pingMs: number | null;
+  status: string;
+}
+
+export interface AdminVpnPingResult {
+  checked: number;
+  results: AdminVpnPingEntry[];
+}
+
 // ---------------------------------------------------------------------------
 // Admin remote config (Stage 4/8) — drives GET /api/app/config
 // ---------------------------------------------------------------------------

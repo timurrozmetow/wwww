@@ -1,6 +1,10 @@
 import type { Translation } from './ru';
 
 export const tk: Translation = {
+  welcome: {
+    greeting: 'Hoş geldiňiz',
+    tagline: 'Çäksiz howpsuz internet',
+  },
   home: {
     timeLeft: 'Galan wagt',
     minutes: 'min',
@@ -21,6 +25,7 @@ export const tk: Translation = {
     auto: 'Awto',
     autoHint: 'Iň gowy serwer awtomatiki',
     empty: 'Serwerler ýok',
+    refresh: 'Pingi täzelemek üçin çekiň',
   },
   settings: {
     title: 'Sazlamalar',

@@ -17,15 +17,21 @@ const admobAndroidAppId =
 const easProjectId = process.env.EAS_PROJECT_ID ?? '3316dd85-c3a1-4f43-b830-7ecd9b17749b';
 
 const expo: ExpoConfig = {
-  name: 'Free VPN Rewards',
+  name: 'NURSEYIT HJ VPN',
   slug: 'free-vpn-rewards',
   owner: 'thebestof',
   version: '0.0.1',
   orientation: 'portrait',
   userInterfaceStyle: 'dark',
+  backgroundColor: '#0B1120',
+  icon: './assets/icon.png',
   platforms: ['android'],
   android: {
     package: 'com.freevpnrewards.app',
+    adaptiveIcon: {
+      foregroundImage: './assets/adaptive-icon.png',
+      backgroundColor: '#0B1120',
+    },
   },
   // AdMob app id is passed as PLUGIN PROPS — this version of the plugin reads it
   // from here (not from a top-level key), and injects the manifest meta-data.

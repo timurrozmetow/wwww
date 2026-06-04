@@ -1,11 +1,19 @@
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { VpnServerView } from '@vpn/types';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { useServers } from '../hooks/queries';
-import { countryFlag, qualityColor } from '../lib/flag';
+import { useRecheckServers, useServers } from '../hooks/queries';
+import { countryFlag, pingColor, qualityColor, signalBars } from '../lib/flag';
 import { storage } from '../lib/storage';
 import { useAppStore } from '../store/app-store';
 import type { RootStackParamList } from '../navigation/types';
@@ -16,6 +24,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ServerSelect'>;
 export function ServerSelectScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const servers = useServers();
+  const recheck = useRecheckServers();
   const selectedServerId = useAppStore((s) => s.selectedServerId);
   const setSelectedServerId = useAppStore((s) => s.setSelectedServerId);
 
@@ -26,12 +35,45 @@ export function ServerSelectScreen({ navigation }: Props) {
   };
 
   const list = servers.data ?? [];
+  const checking = recheck.isPending;
 
   return (
     <ScreenContainer>
-      <ScreenHeader title={t('servers.title')} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('servers.title')}
+        onBack={() => navigation.goBack()}
+        right={
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => recheck.mutate()}
+            disabled={checking}
+            hitSlop={12}
+            style={({ pressed }) => [styles.action, pressed ? styles.actionPressed : null]}
+          >
+            {checking ? (
+              <ActivityIndicator color={colors.primary} size="small" />
+            ) : (
+              <Text style={styles.actionIcon}>⟳</Text>
+            )}
+          </Pressable>
+        }
+      />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={checking}
+            onRefresh={() => recheck.mutate()}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+            progressBackgroundColor={colors.card}
+            title={t('servers.refresh')}
+            titleColor={colors.textMuted}
+          />
+        }
+      >
         <Pressable
           accessibilityRole="button"
           onPress={() => choose(null)}
@@ -65,10 +107,11 @@ export function ServerSelectScreen({ navigation }: Props) {
               <Text style={styles.name}>{s.name}</Text>
               <Text style={styles.meta}>
                 {s.city ? `${s.city} · ` : ''}
-                {t('servers.ping', { ms: s.pingMs })}
+                <Text style={{ color: pingColor(s.pingMs) }}>{t('servers.ping', { ms: s.pingMs })}</Text>
                 {s.recommended ? ` · ${t('servers.recommended')}` : ''}
               </Text>
             </View>
+            <Text style={[styles.signal, { color: pingColor(s.pingMs) }]}>{signalBars(s.pingMs)}</Text>
             <View style={[styles.dot, { backgroundColor: qualityColor(s.quality) }]} />
             {selectedServerId === s.id ? <Text style={styles.check}>✓</Text> : null}
           </Pressable>
@@ -81,6 +124,24 @@ export function ServerSelectScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  action: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.pill,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionPressed: {
+    borderColor: colors.primary,
+  },
+  actionIcon: {
+    color: colors.primary,
+    fontSize: 20,
+    fontWeight: '700',
+  },
   list: {
     gap: spacing.sm,
     paddingBottom: spacing.xl,
@@ -117,6 +178,10 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     marginTop: 2,
+  },
+  signal: {
+    fontSize: 13,
+    letterSpacing: 1,
   },
   dot: {
     width: 10,
