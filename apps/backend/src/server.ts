@@ -99,6 +99,7 @@ import {
   type VpnProviderRepository,
 } from './modules/vpn/vpn-provider.repository.js';
 import { RedisVpnSessionStore, type VpnSessionStore } from './modules/vpn/vpn-session-store.js';
+import { loadHappKeyringFromEnv } from './modules/vpn/happ-decoder.js';
 import { VpnService } from './modules/vpn/vpn.service.js';
 import { AdminVpnService } from './modules/admin/admin-vpn.service.js';
 import { deviceRoutes } from './modules/device/device.routes.js';
@@ -307,6 +308,7 @@ export async function buildServer(opts: BuildServerOptions = {}): Promise<Fastif
     repos.vpnProviders,
     repos.vpnServers,
     repos.auditLogs,
+    loadHappKeyringFromEnv(),
   );
   const bannerService = new BannerService(
     repos.banners,

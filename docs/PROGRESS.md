@@ -4,6 +4,64 @@
 
 ---
 
+## Этап B (часть 1) — конвейер «happ-ссылка → sing-box config» (бэкенд готов + тесты)
+
+**Дата:** 2026-06-03 · **Статус:** ✅ backend-конвейер полностью готов и покрыт
+тестами (backend `test` 169 ✅ 21 файл, `typecheck` ✅ EXIT=0, lint ✅); декодер
+**проверен против реального ключа Happ** (round-trip). Нативный туннель (libbox.aar) —
+оставшийся last-mile, описан в [VPN.md](VPN.md). Выбор владельца: **Path B** —
+«вставил happ-ссылку → работает» (декодим у себя), но чисто: свой аудированный
+декодер без npm-зависимости, ключи только из env (BYOK).
+
+**Конвейер** (admin вставляет источник → серверы), всё в
+[apps/backend/src/modules/vpn](../apps/backend/src/modules/vpn):
+
+- **[happ-decoder.ts](../apps/backend/src/modules/vpn/happ-decoder.ts)** — свой
+  декодер `happ://crypt…crypt4` на `node:crypto` (без пакетов). RSA PKCS#1 v1.5,
+  **блочная цепочка** (128 Б crypt/RSA-1024, 512 Б crypt2/3/4/RSA-4096), URL-safe
+  base64, фолбэк NO_PADDING. Ключи — только env `HAPP_PRIVATE_KEY_CRYPT*` (BYOK,
+  §7.1), в коде нет ключей. crypt5 (ChaCha20-Poly1305) → внятная ошибка
+  `unsupported_version`.
+- **[proxy-parser.ts](../apps/backend/src/modules/vpn/proxy-parser.ts)** —
+  vless/vmess(base64-JSON)/trojan/ss(SIP002+legacy) + base64/plain подписка →
+  нормализованный `ProxyConfig`.
+- **[singbox-outbound.ts](../apps/backend/src/modules/vpn/singbox-outbound.ts)** +
+  **[singbox-config.ts](../apps/backend/src/modules/vpn/singbox-config.ts)** —
+  `ProxyConfig` → outbound → полный config (tun `gvisor` + `[proxy, direct]` +
+  route sniff/hijack-dns/private→direct). Схема **sing-box 1.11+** (валидна до
+  1.13.x): без `inet4_address`/inbound-`sniff`/`block`·`dns`-outbounds/geoip.
+- **[subscription.ts](../apps/backend/src/modules/vpn/subscription.ts)** —
+  `resolveSubscription`: happ→decode→(sub-URL fetch | inline)→`ProxyConfig[]`,
+  инъектируемый fetcher (timeout/size cap), маппинг ошибок.
+- **Admin import:** `POST /api/admin/vpn/import`
+  ([admin-vpn.service.ts](../apps/backend/src/modules/admin/admin-vpn.service.ts)
+  `importFromSource`) → создаёт `vpn_servers` с `configBlob`; страна из имени
+  (флаг-эмодзи / 2-буквенный код) или fallback. UI — экран **VPN → Import servers**
+  ([VpnPage.tsx](../apps/admin/src/pages/VpnPage.tsx)).
+- **Ключи Happ — публичные/инертные** (извлечены сообществом). Установка одной
+  командой: `pnpm --filter @vpn/backend happ:key crypt4 --env >> deploy/.env.production`
+  ([scripts/fetch-happ-key.mjs](../apps/backend/scripts/fetch-happ-key.mjs) тянет
+  ключ в рантайме из публичного репо — в исходниках ключа нет). Проверено: RSA-4096.
+
+**Натив** ([VpnTunnelService.kt](../apps/mobile/modules/vpn/android/src/main/java/com/freevpnrewards/vpn/VpnTunnelService.kt))
+переписан под **правильную модель** (research-verdict): config содержит `tun`
+inbound, **libbox драйвит** — `Libbox.newService(config, this).start()`, а
+`establish()` происходит внутри коллбэка `openTun(TunOptions)`; сокеты ядра
+защищаются `protect()`. Старая модель (ручной establish + фиктивный SingBoxBridge)
+была неверной. Модуль остаётся **отключён** до вендоринга `libbox.aar` (gomobile,
+пиннутый тег, `with_gvisor`) — шаги в [VPN.md](VPN.md).
+
+**Допущения/техдолг (ASSUMPTION):** `configBlob`/`host` пока в БД открытым текстом
+(at-rest шифрование §9 — следующий шаг); `parseSubscription` понимает список URI
+(не sing-box-JSON/Clash-YAML) — расширить при необходимости; полный набор методов
+`PlatformInterface` добить под версию вендоренного AAR.
+
+**Проверки:** backend `test` ✅ 169 (21 файл); новые сьюты — decoder 12, parser 11,
+outbound 9, config 5, subscription 9, import 6 (=52 новых теста) · `typecheck` ✅
+EXIT=0 · eslint changed ✅ · admin/mobile `typecheck` ✅ · реальный ключ round-trip ✅.
+
+---
+
 ## Mobile UX-редизайн — упрощённый вход + «классический VPN»
 
 **Дата:** 2026-06-03 · **Статус:** ✅ typecheck + lint + release-бандл (export:embed

@@ -6,6 +6,8 @@ import type {
   AdminLoginResponse,
   AdminPushCampaign,
   AdminPushCampaignCreate,
+  AdminVpnImportRequest,
+  AdminVpnImportResult,
   AdminVpnProvider,
   AdminVpnProviderCreate,
   AdminVpnServer,
@@ -56,6 +58,9 @@ export const adminApi = {
 
   toggleVpnProvider: (id: string, enabled: boolean): Promise<{ ok: boolean }> =>
     apiFetch(`/api/admin/vpn/providers/${id}/toggle`, { method: 'POST', body: { enabled } }),
+
+  importVpnSource: (body: AdminVpnImportRequest): Promise<AdminVpnImportResult> =>
+    apiFetch('/api/admin/vpn/import', { method: 'POST', body }),
 
   vpnServers: (): Promise<AdminVpnServer[]> => apiFetch('/api/admin/vpn/servers'),
 

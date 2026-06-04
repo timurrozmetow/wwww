@@ -28,9 +28,25 @@ export function VpnPage() {
   });
   const remove = useMutation({ mutationFn: adminApi.deleteVpnServer, onSuccess: invalidate });
   const create = useMutation({ mutationFn: adminApi.createVpnServer, onSuccess: invalidate });
+  const importSource = useMutation({ mutationFn: adminApi.importVpnSource, onSuccess: invalidate });
 
   const [form, setForm] = useState({ providerId: '', country: '', name: '', pingMs: 50 });
+  const [importForm, setImportForm] = useState({ providerId: '', source: '', country: '' });
   const providerOptions = providers.data ?? [];
+
+  const onImport = (e: FormEvent) => {
+    e.preventDefault();
+    const providerId = importForm.providerId || providerOptions[0]?.id;
+    if (!providerId || !importForm.source.trim()) return;
+    importSource.mutate(
+      {
+        providerId,
+        source: importForm.source.trim(),
+        country: importForm.country.trim() || undefined,
+      },
+      { onSuccess: () => setImportForm({ providerId: '', source: '', country: '' }) },
+    );
+  };
 
   const onCreate = (e: FormEvent) => {
     e.preventDefault();
@@ -44,6 +60,74 @@ export function VpnPage() {
 
   return (
     <div className="space-y-8">
+      <section>
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-400">
+          Import servers
+        </h2>
+        <form
+          onSubmit={onImport}
+          className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-4"
+        >
+          <p className="text-xs text-slate-400">
+            Paste a <code className="text-slate-300">happ://crypt4/…</code> link, a subscription
+            URL, or vless/vmess/trojan/ss lines. The backend decodes &amp; creates one server per
+            config. The raw config never reaches the app UI.
+          </p>
+          <textarea
+            value={importForm.source}
+            onChange={(e) => setImportForm((f) => ({ ...f, source: e.target.value }))}
+            placeholder="happ://crypt4/…  or  https://sub.example.com/…  or  vless://…"
+            rows={3}
+            className="block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-slate-100"
+          />
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="text-sm text-slate-300">
+              Provider
+              <select
+                value={importForm.providerId || providerOptions[0]?.id || ''}
+                onChange={(e) => setImportForm((f) => ({ ...f, providerId: e.target.value }))}
+                className="mt-1 block rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100"
+              >
+                {providerOptions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm text-slate-300">
+              Fallback country
+              <input
+                value={importForm.country}
+                maxLength={8}
+                placeholder="TM"
+                onChange={(e) =>
+                  setImportForm((f) => ({ ...f, country: e.target.value.toUpperCase() }))
+                }
+                className="mt-1 block w-24 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={importSource.isPending || !importForm.source.trim()}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+            >
+              {importSource.isPending ? 'Importing…' : 'Import'}
+            </button>
+            {importSource.isSuccess ? (
+              <span className="text-sm text-green-400">
+                Imported {importSource.data.total} server(s) ({importSource.data.sourceKind}).
+              </span>
+            ) : null}
+            {importSource.isError ? (
+              <span className="text-sm text-red-400">
+                {(importSource.error as Error).message}
+              </span>
+            ) : null}
+          </div>
+        </form>
+      </section>
+
       <section>
         <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-400">
           Providers

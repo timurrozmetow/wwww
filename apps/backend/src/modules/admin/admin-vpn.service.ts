@@ -1,13 +1,24 @@
 import type {
+  AdminVpnImportRequest,
+  AdminVpnImportResult,
   AdminVpnProvider,
   AdminVpnProviderCreate,
   AdminVpnServer,
   AdminVpnServerCreate,
 } from '@vpn/types';
-import { NotFoundError } from '../../lib/errors.js';
+import { NotFoundError, ValidationError } from '../../lib/errors.js';
+import { HappDecodeError, type HappKeyring } from '../vpn/happ-decoder.js';
+import { buildSingBoxConfigJson } from '../vpn/singbox-config.js';
+import {
+  resolveSubscription,
+  SubscriptionError,
+  type SubscriptionFetcher,
+} from '../vpn/subscription.js';
 import type { VpnProviderRepository, VpnProviderRow } from '../vpn/vpn-provider.repository.js';
 import type { VpnServerRepository, VpnServerRow } from '../vpn/vpn-server.repository.js';
 import type { AuditLogRepository } from './admin.repository.js';
+
+const DEFAULT_IMPORT_LIMIT = 50;
 
 function toServer(s: VpnServerRow): AdminVpnServer {
   return {
@@ -32,6 +43,10 @@ export class AdminVpnService {
     private readonly providers: VpnProviderRepository,
     private readonly servers: VpnServerRepository,
     private readonly audit: AuditLogRepository,
+    /** Happ decode keys (BYOK from env). Empty → happ:// links are rejected. */
+    private readonly happKeyring: HappKeyring = {},
+    /** Subscription fetcher override (tests inject a stub). */
+    private readonly fetcher?: SubscriptionFetcher,
   ) {}
 
   async listProviders(): Promise<AdminVpnProvider[]> {
@@ -85,6 +100,51 @@ export class AdminVpnService {
     return toServer(server);
   }
 
+  /**
+   * Imports servers from a pasted source (happ link / subscription URL / inline
+   * list). Resolves → builds a sing-box configBlob per proxy → creates servers.
+   */
+  async importFromSource(
+    adminId: number,
+    input: AdminVpnImportRequest,
+  ): Promise<AdminVpnImportResult> {
+    const provider = await this.providers.findById(input.providerId);
+    if (!provider) throw new NotFoundError('Provider not found');
+
+    let resolved;
+    try {
+      resolved = await resolveSubscription(input.source, {
+        keyring: this.happKeyring,
+        fetcher: this.fetcher,
+        maxConfigs: input.limit ?? DEFAULT_IMPORT_LIMIT,
+      });
+    } catch (err) {
+      throw toValidationError(err);
+    }
+
+    const imported: AdminVpnServer[] = [];
+    for (const proxy of resolved.configs) {
+      const country = inferCountry(proxy.tag) ?? input.country ?? 'XX';
+      const configBlob = buildSingBoxConfigJson(proxy, { stack: input.stack });
+      const server = await this.servers.create({
+        providerId: provider.id,
+        country,
+        name: proxy.tag.slice(0, 64) || `${proxy.server}:${proxy.port}`,
+        host: proxy.server,
+        configBlob,
+      });
+      imported.push(toServer(server));
+    }
+
+    await this.audit.record({
+      adminId,
+      action: 'vpn.import',
+      targetType: 'vpn_provider',
+      targetId: provider.id,
+    });
+    return { sourceKind: resolved.sourceKind, imported, total: imported.length };
+  }
+
   async toggleServer(adminId: number, id: string, enabled: boolean): Promise<void> {
     const server = await this.servers.findById(id);
     if (!server) throw new NotFoundError('Server not found');
@@ -121,4 +181,39 @@ export class AdminVpnService {
       createdAt: p.createdAt.toISOString(),
     };
   }
+}
+
+/**
+ * Best-effort ISO-3166 alpha-2 from a server label: a flag emoji (two regional
+ * indicator symbols) or a standalone 2-letter code. Null if neither is present.
+ */
+function inferCountry(tag: string): string | null {
+  const chars = [...tag];
+  for (let i = 0; i < chars.length - 1; i++) {
+    const a = chars[i]!.codePointAt(0)!;
+    const b = chars[i + 1]!.codePointAt(0)!;
+    if (a >= 0x1f1e6 && a <= 0x1f1ff && b >= 0x1f1e6 && b <= 0x1f1ff) {
+      return String.fromCharCode(65 + (a - 0x1f1e6)) + String.fromCharCode(65 + (b - 0x1f1e6));
+    }
+  }
+  const code = tag.match(/\b([A-Za-z]{2})\b/);
+  return code ? code[1]!.toUpperCase() : null;
+}
+
+/** Maps decode/fetch failures to a 400 with an operator-friendly message. */
+function toValidationError(err: unknown): ValidationError {
+  if (err instanceof HappDecodeError) {
+    const hint =
+      err.code === 'no_key'
+        ? ' — set HAPP_PRIVATE_KEY_CRYPT4 (see scripts/fetch-happ-key.mjs)'
+        : err.code === 'unsupported_version'
+          ? ' — only crypt…crypt4 are supported'
+          : '';
+    return new ValidationError(`Happ link could not be decoded: ${err.message}${hint}`);
+  }
+  if (err instanceof SubscriptionError) {
+    return new ValidationError(`Subscription could not be resolved: ${err.message}`);
+  }
+  if (err instanceof ValidationError) return err;
+  return new ValidationError('Import source could not be processed');
 }

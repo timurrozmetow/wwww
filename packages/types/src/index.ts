@@ -567,6 +567,31 @@ export interface AdminVpnServerCreate {
   countryPriority?: number;
 }
 
+export type VpnImportSourceKind = 'happ' | 'subscription-url' | 'inline';
+
+/**
+ * Imports servers from a pasted source: a `happ://crypt{N}` link, a subscription
+ * URL, or an inline proxy URI / list. The backend decodes/fetches/parses it and
+ * creates one server per proxy with a generated sing-box configBlob (§7.2 — the
+ * raw config is never returned to clients).
+ */
+export interface AdminVpnImportRequest {
+  providerId: string;
+  source: string;
+  /** Fallback ISO country for servers whose name has no detectable country. */
+  country?: string;
+  /** Max servers to import (default 50). */
+  limit?: number;
+  /** sing-box tun stack override (default gvisor). */
+  stack?: 'system' | 'gvisor' | 'mixed';
+}
+
+export interface AdminVpnImportResult {
+  sourceKind: VpnImportSourceKind;
+  imported: AdminVpnServer[];
+  total: number;
+}
+
 // ---------------------------------------------------------------------------
 // Admin remote config (Stage 4/8) — drives GET /api/app/config
 // ---------------------------------------------------------------------------

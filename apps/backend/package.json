@@ -17,6 +17,7 @@
     "db:studio": "drizzle-kit studio",
     "admin:create": "tsx src/scripts/create-admin.ts",
     "vpn:seed": "tsx src/scripts/seed-vpn.ts",
+    "happ:key": "node scripts/fetch-happ-key.mjs",
     "ads:seed": "tsx src/scripts/seed-ad-providers.ts",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\""
   },

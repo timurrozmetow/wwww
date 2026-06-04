@@ -8,6 +8,7 @@ import type {
   AdminProfile,
   AdminPushCampaignCreate,
   AdminRole,
+  AdminVpnImportRequest,
   AdminVpnProviderCreate,
   AdminVpnServerCreate,
   EconomyInputs,
@@ -92,6 +93,19 @@ const vpnServerCreateSchema = {
     status: { type: 'string', maxLength: 16 },
     priority: { type: 'integer' },
     countryPriority: { type: 'integer' },
+  },
+} as const;
+
+const vpnImportSchema = {
+  type: 'object',
+  required: ['providerId', 'source'],
+  additionalProperties: false,
+  properties: {
+    providerId: { type: 'string', maxLength: 36 },
+    source: { type: 'string', minLength: 1, maxLength: 8192 },
+    country: { type: 'string', maxLength: 8 },
+    limit: { type: 'integer', minimum: 1, maximum: 200 },
+    stack: { type: 'string', enum: ['system', 'gvisor', 'mixed'] },
   },
 } as const;
 
@@ -276,6 +290,13 @@ export const adminRoutes: FastifyPluginAsync<AdminRoutesOptions> = async (app, o
         await opts.vpn.toggleProvider(req.user.sub, req.params.id, req.body.enabled);
         return { ok: true };
       },
+    );
+
+    // Paste a happ:// link / subscription URL / inline list → create servers.
+    guarded.post<{ Body: AdminVpnImportRequest }>(
+      '/api/admin/vpn/import',
+      { schema: { body: vpnImportSchema } },
+      (req) => opts.vpn.importFromSource(req.user.sub, req.body),
     );
 
     guarded.get('/api/admin/vpn/servers', () => opts.vpn.listServers());
